@@ -1,5 +1,5 @@
 import { useSimulation } from "@/hooks/useSimulation";
-import { NetworkGraph } from "@/components/NetworkGraph";
+import { NetworkMap } from "@/components/NetworkMap";
 import { Card } from "@/components/ui/card";
 
 export default function Network() {
@@ -23,7 +23,7 @@ export default function Network() {
         <MiniStat label="Anomalies" value={anomalies} tone="destructive" />
       </div>
 
-      <NetworkGraph snapshot={snap} height={560} />
+      <NetworkMap snapshot={snap} height={560} />
     </div>
   );
 }
