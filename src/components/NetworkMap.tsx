@@ -55,7 +55,9 @@ export function NetworkMap({ snapshot, height = 520 }: Props) {
     mapRef.current = map;
 
     // ensure proper sizing
-    setTimeout(() => map.invalidateSize(), 50);
+    setTimeout(() => {
+      if (mapRef.current) mapRef.current.invalidateSize();
+    }, 50);
 
     return () => {
       map.remove();
@@ -78,6 +80,8 @@ export function NetworkMap({ snapshot, height = 520 }: Props) {
       const a = nodeMap.get(e.from);
       const b = nodeMap.get(e.to);
       if (!a || !b) continue;
+      if (typeof a.lat !== "number" || typeof a.lng !== "number") continue;
+      if (typeof b.lat !== "number" || typeof b.lng !== "number") continue;
       const color = statusColor[e.status];
       const dash =
         e.status === "anomaly" ? "6 6" : e.status === "high" ? "10 6" : "2 8";
@@ -102,6 +106,7 @@ export function NetworkMap({ snapshot, height = 520 }: Props) {
 
     // nodes
     for (const n of snapshot.nodes) {
+      if (typeof n.lat !== "number" || typeof n.lng !== "number") continue;
       const color = statusColor[n.status];
       const marker = L.circleMarker(toLatLng(n), {
         radius: n.status === "anomaly" ? 11 : 9,
