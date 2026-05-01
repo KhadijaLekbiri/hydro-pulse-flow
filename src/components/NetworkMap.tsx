@@ -8,13 +8,12 @@ interface Props {
   height?: number;
 }
 
-// Casablanca bounding box (roughly central districts)
-// SW (lat, lng) → NE (lat, lng)
+// Casablanca bounding box covering the sensor districts
 const CASA_BOUNDS: [[number, number], [number, number]] = [
-  [33.555, -7.665], // SW
-  [33.605, -7.585], // NE
+  [33.535, -7.690], // SW
+  [33.610, -7.570], // NE
 ];
-const CASA_CENTER: [number, number] = [33.58, -7.62];
+const CASA_CENTER: [number, number] = [33.575, -7.625];
 
 const statusColor = {
   normal: "hsl(var(--success))",
@@ -22,12 +21,9 @@ const statusColor = {
   anomaly: "hsl(var(--destructive))",
 } as const;
 
-// Map node grid coords (0..1) to real lat/lng inside the Casablanca box.
-function toLatLng(n: { x: number; y: number }): [number, number] {
-  const [[swLat, swLng], [neLat, neLng]] = CASA_BOUNDS;
-  const lat = swLat + (1 - n.y) * (neLat - swLat); // invert y so row 0 is north
-  const lng = swLng + n.x * (neLng - swLng);
-  return [lat, lng];
+// Use real lat/lng on each node.
+function toLatLng(n: { lat: number; lng: number }): [number, number] {
+  return [n.lat, n.lng];
 }
 
 export function NetworkMap({ snapshot, height = 520 }: Props) {
