@@ -2,7 +2,7 @@ import { useSimulation } from "@/hooks/useSimulation";
 import { StatCard } from "@/components/StatCard";
 import { UsageChart } from "@/components/UsageChart";
 import { AlertList } from "@/components/AlertList";
-import { NetworkGraph } from "@/components/NetworkGraph";
+import { NetworkMap } from "@/components/NetworkMap";
 import { Activity, Droplets, Gauge, Home } from "lucide-react";
 
 export default function Overview() {
@@ -53,8 +53,8 @@ export default function Overview() {
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-muted-foreground">Network Snapshot</h3>
-        <NetworkGraph snapshot={snap} height={420} />
+        <h3 className="mb-3 text-sm font-semibold text-muted-foreground">Network Snapshot — Casablanca</h3>
+        <NetworkMap snapshot={snap} height={420} />
       </div>
     </div>
   );
