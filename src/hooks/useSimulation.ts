@@ -12,6 +12,9 @@ export function useSimulation(): SimSnapshot {
     history: [],
     leakActive: false,
   }));
-  useEffect(() => sim.subscribe(setSnap), []);
+  useEffect(() => {
+    const unsub = sim.subscribe(setSnap);
+    return () => { unsub; };
+  }, []);
   return snap;
 }
