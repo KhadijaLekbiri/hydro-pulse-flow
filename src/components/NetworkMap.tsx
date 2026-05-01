@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import type { SimSnapshot, WaterNode, WaterEdge } from "@/lib/simulation";
 
 interface Props {
@@ -35,6 +37,7 @@ export function NetworkMap({ snapshot, height = 520 }: Props) {
     | { kind: "edge"; edge: WaterEdge; x: number; y: number }
     | null
   >(null);
+  const navigate = useNavigate();
 
   // init map once
   useEffect(() => {
@@ -101,6 +104,9 @@ export function NetworkMap({ snapshot, height = 520 }: Props) {
         setHover({ kind: "edge", edge: e, x: oe.clientX, y: oe.clientY });
       });
       line.on("mouseout", () => setHover(null));
+      line.on("click", () => {
+        navigate(`/pipe/${e.id}`);
+      });
       line.addTo(layer);
     }
 
@@ -124,6 +130,9 @@ export function NetworkMap({ snapshot, height = 520 }: Props) {
         setHover({ kind: "node", node: n, x: oe.clientX, y: oe.clientY });
       });
       marker.on("mouseout", () => setHover(null));
+      marker.on("click", () => {
+        navigate(`/household/${n.id}`);
+      });
       marker.addTo(layer);
 
       if (n.status === "anomaly") {

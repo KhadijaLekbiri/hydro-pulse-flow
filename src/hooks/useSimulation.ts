@@ -14,7 +14,9 @@ export function useSimulation(): SimSnapshot {
   }));
   useEffect(() => {
     const unsub = sim.subscribe(setSnap);
-    return () => { unsub; };
+    return () => {
+      unsub();
+    };
   }, []);
   return snap;
 }

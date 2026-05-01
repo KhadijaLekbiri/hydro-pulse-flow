@@ -8,6 +8,8 @@ import Overview from "./pages/Overview";
 import Network from "./pages/Network";
 import Predictions from "./pages/Predictions";
 import Alerts from "./pages/Alerts";
+import HouseholdDetails from "./pages/HouseholdDetails";
+import PipeDetails from "./pages/PipeDetails";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
             <Route path="/network" element={<Network />} />
             <Route path="/predictions" element={<Predictions />} />
             <Route path="/alerts" element={<Alerts />} />
+            <Route path="/household/:id" element={<HouseholdDetails />} />
+            <Route path="/pipe/:id" element={<PipeDetails />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -49,7 +49,7 @@ export default function Overview() {
         <div className="lg:col-span-2">
           <UsageChart data={snap.history} />
         </div>
-        <AlertList alerts={snap.alerts} />
+        <AlertList alerts={snap.alerts.filter(a => a.status === "waiting")} />
       </div>
 
       <div>

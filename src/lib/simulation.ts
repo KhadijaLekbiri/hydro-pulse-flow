@@ -32,6 +32,7 @@ export interface Alert {
   message: string;
   nodeId?: string;
   edgeId?: string;
+  status: "waiting" | "sent" | "handled";
 }
 
 export interface SimSnapshot {
@@ -206,6 +207,14 @@ export class WaterSim {
     return this.leakActive;
   }
 
+  updateAlertStatus(id: string, status: "waiting" | "sent" | "handled") {
+    const alert = this.alerts.find((a) => a.id === id);
+    if (alert) {
+      alert.status = status;
+      this.emit();
+    }
+  }
+
   /** Linear regression forecast for next 24 hourly points. */
   forecast(hours = 24): { hour: number; value: number }[] {
     // Aggregate history into hourly buckets (approximate: use last N points).
@@ -245,13 +254,14 @@ export class WaterSim {
     return this.nodes.reduce((a, n) => a + n.consumption, 0);
   }
 
-  private pushAlert(a: Omit<Alert, "id" | "ts">) {
+  private pushAlert(a: Omit<Alert, "id" | "ts" | "status">) {
     this.alerts.unshift({
       ...a,
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       ts: Date.now(),
+      status: "waiting",
     });
-    this.alerts = this.alerts.slice(0, 30);
+    this.alerts = this.alerts.slice(0, 50);
   }
 
   private tick() {

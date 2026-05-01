@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import type { SimSnapshot, WaterNode, WaterEdge } from "@/lib/simulation";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +22,7 @@ const statusFill = {
 } as const;
 
 export function NetworkGraph({ snapshot, height = 520 }: Props) {
+  const navigate = useNavigate();
   const [hover, setHover] = useState<{ kind: "node" | "edge"; id: string; x: number; y: number } | null>(null);
 
   const W = 900;
@@ -71,8 +74,10 @@ export function NetworkGraph({ snapshot, height = 520 }: Props) {
                 className={cn("pipe-flow", speed)}
                 style={{ cursor: "pointer" }}
                 onMouseEnter={(ev) => setHover({ kind: "edge", id: e.id, x: ev.clientX, y: ev.clientY })}
-                onMouseMove={(ev) => setHover({ kind: "edge", id: e.id, x: ev.clientX, y: ev.clientY })}
                 onMouseLeave={() => setHover(null)}
+                onClick={() => {
+                  navigate(`/pipe/${e.id}`);
+                }}
               />
             </g>
           );
@@ -89,8 +94,10 @@ export function NetworkGraph({ snapshot, height = 520 }: Props) {
               key={n.id}
               style={{ cursor: "pointer" }}
               onMouseEnter={(ev) => setHover({ kind: "node", id: n.id, x: ev.clientX, y: ev.clientY })}
-              onMouseMove={(ev) => setHover({ kind: "node", id: n.id, x: ev.clientX, y: ev.clientY })}
               onMouseLeave={() => setHover(null)}
+              onClick={() => {
+                navigate(`/household/${n.id}`);
+              }}
             >
               {n.status === "anomaly" && (
                 <circle cx={cx} cy={cy} r={18} fill="none" stroke={stroke} strokeWidth={2} className="pulse-alert" />
