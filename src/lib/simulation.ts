@@ -7,8 +7,10 @@ export type NodeStatus = "normal" | "high" | "anomaly";
 export interface WaterNode {
   id: string;
   label: string;
-  x: number; // grid coords (0..1)
+  x: number; // normalized 0..1 (derived from lat/lng), kept for compatibility
   y: number;
+  lat: number;
+  lng: number;
   consumption: number; // L/h
   baseline: number;
   status: NodeStatus;
@@ -43,58 +45,76 @@ export interface SimSnapshot {
   leakActive: boolean;
 }
 
-// 5x4 neighborhood grid → 20 households
-const COLS = 5;
-const ROWS = 4;
+// Real Casablanca neighborhoods — sensor-equipped households scattered across districts.
+// Coordinates are approximate addresses in each area.
+const CASA_HOUSEHOLDS: { id: string; label: string; lat: number; lng: number }[] = [
+  { id: "H01", label: "Anfa - Bd d'Anfa", lat: 33.5897, lng: -7.6444 },
+  { id: "H02", label: "Anfa Supérieur", lat: 33.5842, lng: -7.6552 },
+  { id: "H03", label: "Ain Diab - Corniche", lat: 33.6005, lng: -7.6755 },
+  { id: "H04", label: "Ain Diab - Tahiti", lat: 33.5948, lng: -7.6840 },
+  { id: "H05", label: "Bourgogne", lat: 33.5985, lng: -7.6360 },
+  { id: "H06", label: "Gauthier - Massira", lat: 33.5879, lng: -7.6298 },
+  { id: "H07", label: "Maârif - Bd Zerktouni", lat: 33.5805, lng: -7.6260 },
+  { id: "H08", label: "Maârif Extension", lat: 33.5742, lng: -7.6315 },
+  { id: "H09", label: "Racine", lat: 33.5921, lng: -7.6395 },
+  { id: "H10", label: "Palmier", lat: 33.5731, lng: -7.6202 },
+  { id: "H11", label: "CIL - Hay Hassani", lat: 33.5688, lng: -7.6585 },
+  { id: "H12", label: "Oasis", lat: 33.5612, lng: -7.6388 },
+  { id: "H13", label: "Sidi Maârouf", lat: 33.5395, lng: -7.6505 },
+  { id: "H14", label: "Bourgogne Ouest", lat: 33.6042, lng: -7.6428 },
+  { id: "H15", label: "Sidi Belyout - Centre", lat: 33.5945, lng: -7.6155 },
+  { id: "H16", label: "Hay Mohammadi", lat: 33.5868, lng: -7.5818 },
+  { id: "H17", label: "Roches Noires", lat: 33.6015, lng: -7.5755 },
+  { id: "H18", label: "Belvédère", lat: 33.5778, lng: -7.5990 },
+  { id: "H19", label: "2 Mars", lat: 33.5685, lng: -7.6080 },
+  { id: "H20", label: "Polo - Californie", lat: 33.5468, lng: -7.6262 },
+];
+
+// Bounding box derived from the points (with a small margin) for x/y normalization.
+const LAT_MIN = 33.535;
+const LAT_MAX = 33.610;
+const LNG_MIN = -7.690;
+const LNG_MAX = -7.570;
 
 function buildInitialNodes(): WaterNode[] {
-  const nodes: WaterNode[] = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const id = `H${r}-${c}`;
-      const baseline = 30 + Math.random() * 60; // 30–90 L/h baseline
-      nodes.push({
-        id,
-        label: `House ${r * COLS + c + 1}`,
-        x: (c + 0.5) / COLS,
-        y: (r + 0.5) / ROWS,
-        consumption: baseline,
-        baseline,
-        status: "normal",
-      });
-    }
-  }
-  return nodes;
+  return CASA_HOUSEHOLDS.map((h) => {
+    const baseline = 30 + Math.random() * 60;
+    return {
+      id: h.id,
+      label: h.label,
+      lat: h.lat,
+      lng: h.lng,
+      x: (h.lng - LNG_MIN) / (LNG_MAX - LNG_MIN),
+      y: 1 - (h.lat - LAT_MIN) / (LAT_MAX - LAT_MIN), // y=0 at top (north)
+      consumption: baseline,
+      baseline,
+      status: "normal",
+    };
+  });
 }
 
+// Hand-crafted pipe network connecting nearby districts (no grid).
+const PIPE_LINKS: [string, string][] = [
+  ["H03", "H04"], ["H04", "H02"], ["H02", "H01"], ["H01", "H14"],
+  ["H14", "H05"], ["H05", "H09"], ["H09", "H06"], ["H06", "H07"],
+  ["H07", "H08"], ["H08", "H10"], ["H10", "H12"], ["H12", "H11"],
+  ["H11", "H04"], ["H05", "H15"], ["H15", "H17"], ["H17", "H16"],
+  ["H16", "H18"], ["H18", "H07"], ["H18", "H19"], ["H19", "H20"],
+  ["H20", "H13"], ["H13", "H12"], ["H15", "H06"], ["H01", "H09"],
+];
+
 function buildInitialEdges(nodes: WaterNode[]): WaterEdge[] {
-  const edges: WaterEdge[] = [];
-  const idx = (r: number, c: number) => r * COLS + c;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (c < COLS - 1) {
-        edges.push({
-          id: `E-${r}${c}-h`,
-          from: nodes[idx(r, c)].id,
-          to: nodes[idx(r, c + 1)].id,
-          flow: 0,
-          capacity: 400,
-          status: "normal",
-        });
-      }
-      if (r < ROWS - 1) {
-        edges.push({
-          id: `E-${r}${c}-v`,
-          from: nodes[idx(r, c)].id,
-          to: nodes[idx(r + 1, c)].id,
-          flow: 0,
-          capacity: 400,
-          status: "normal",
-        });
-      }
-    }
-  }
-  return edges;
+  const ids = new Set(nodes.map((n) => n.id));
+  return PIPE_LINKS.filter(([a, b]) => ids.has(a) && ids.has(b)).map(
+    ([from, to], i) => ({
+      id: `P${(i + 1).toString().padStart(2, "0")}`,
+      from,
+      to,
+      flow: 0,
+      capacity: 400,
+      status: "normal" as NodeStatus,
+    }),
+  );
 }
 
 // Realistic daily pattern: peaks in morning + evening.
